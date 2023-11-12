@@ -1,5 +1,7 @@
 import paho.mqtt.client as mqtt
 from utils.config import Config
+from db.mongo import TemperatureCollection
+
 
 config = Config()
 
@@ -15,6 +17,11 @@ def on_connect(con, userdata, flags, rc):
 def on_message(con, userdata, msg):
     payload = msg.payload.decode('utf-8')
     print(payload)
+
+
+mongo = TemperatureCollection()
+
+a = mongo.get_all_dicts()
 
 
 
