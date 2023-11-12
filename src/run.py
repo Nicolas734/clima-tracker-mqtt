@@ -15,7 +15,7 @@ def on_connect(con, userdata, flags, rc):
 def on_message(con, userdata, msg):
     payload = msg.payload.decode('utf-8')
     print(payload)
-    
+
 
 
 con = mqtt.Client()
