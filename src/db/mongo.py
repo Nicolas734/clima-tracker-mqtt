@@ -4,6 +4,8 @@ from threading  import Lock
 from utils.singleton import Singleton
 from utils.config import Config
 
+
+
 class Mongo(metaclass=Singleton):
     def __init__(self, config: Config = None):
         self._config = (config or Config())
