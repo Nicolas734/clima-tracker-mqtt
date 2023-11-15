@@ -1,8 +1,11 @@
 from configparser import ConfigParser
+from os import getcwd
 
 
 class Config():
-    DEFAULT_CONFIG_FILE_PATH = "config.ini"
+    path = getcwd()
+    DEFAULT_CONFIG_FILE_PATH = path+"/config.ini"
+
     def __init__(self) -> None:
         self._g = self._init_config_parser()
 

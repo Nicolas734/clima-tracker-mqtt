@@ -67,7 +67,8 @@ class MqttClient(metaclass=Singleton):
         while True:
             if (int(time.time()) % 1600) == 0:
                 for packet in self._packets:
-                    self._collection.set_dict(loads(packet))
+                    packet = loads(packet)
+                    self._collection.set_dict(packet)
                     self._packets.pop()
                 sleep(1)
 
