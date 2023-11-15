@@ -5,13 +5,15 @@ from threading  import Lock, Thread
 import time
 from db.mongo import TemperatureCollection
 from time import sleep
-from json import dumps, loads
+from json import loads
+from utils.logger import Logger
 
 
 class MqttClient(metaclass=Singleton):
-    def __init__(self, config: Config=None, db: TemperatureCollection = None) -> None:
+    def __init__(self, config: Config=None, db: TemperatureCollection = None, logger: Logger = None) -> None:
         self._config = (config or Config())
         self._collection = (db or TemperatureCollection())
+        self._logger = (logger or Logger())
         self._packets = []
         self._load_configs()
         self._mqtt_client = self._create_connection_and_set_callbacks()
@@ -45,7 +47,10 @@ class MqttClient(metaclass=Singleton):
         payload = msg.payload.decode('utf-8')
         is_empty = self.verify_if_packet_is_empty(payload)
         if not is_empty:
-            self._packets.append(payload)
+            packet = loads(payload)
+            msg = "[INFO] - MqttClient >> Received packet from device with uid {}.".format(packet["uid"])
+            self._logger.log(msg)
+            self._packets.append(packet)
         print(payload)
 
 
@@ -61,16 +66,33 @@ class MqttClient(metaclass=Singleton):
         else:
             return False
 
-    def run(self):
-        self._mqtt_client.connect(self._broker, self._port, 60)
-        self._mqtt_client.loop_start()
-        while True:
+    def send_packts_to_mongodb(self):
+        try:
             if (int(time.time()) % 1600) == 0:
-                for packet in self._packets:
-                    packet = loads(packet)
-                    self._collection.set_dict(packet)
-                    self._packets.pop()
                 sleep(1)
+                msg = "[INFO] - MqttClient >> sending {} packets".format(len(self._packets))
+                self._logger.log(msg)
+                for packet in self._packets:
+                    self._collection.set_dict(packet)
+                self._packets.clear()
+                sleep(1)
+        except Exception as error:
+            msg = "[ERROR] - MqttClient >> fail to send packet to mongodb. \n{}".format(error)
+            self._logger.log(msg)
+
+    def run(self):
+        try:
+            self._mqtt_client.connect(self._broker, self._port, 60)
+            self._mqtt_client.loop_start()
+            msg = "[INFO] - MqttClient >> starting aplication"
+            self._logger.log(msg)
+            while True:
+                self.send_packts_to_mongodb()
+
+        except Exception as error:
+            msg = "[ERROR] - MqttClient >> error on start mqtt loop. \n{}".format(error)
+            self._logger.log(msg)
+
 
     def run_and_check_threads(self):
         if self._thread is None:
