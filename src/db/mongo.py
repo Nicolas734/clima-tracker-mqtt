@@ -14,13 +14,13 @@ class Mongo(metaclass=Singleton):
         self.__lock = Lock()
 
     def _load_configs(self):
-        self._uri = self._config.g.get("mongo", "uri")
-        self._database = self._config.g.get("mongo", "database")
+        self._uri: str = self._config.g.get("mongo", "uri")
+        self._database: str = self._config.g.get("mongo", "database")
 
 
     def _create_mongo_db_client(self):
         client = MongoClient(self._uri)
-        conn =client.get_database(name="ClimaTracker")
+        conn =client.get_database(name=self._database)
         return conn
 
 
